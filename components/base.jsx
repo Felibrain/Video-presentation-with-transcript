@@ -172,7 +172,9 @@ const Base = ({ input, paragraphs, width, transcription }) => {
   };
 
   const [withVideo] = useAtom(withVideoAtom);
+ 
   const videoComponentRef = useRef();
+  
   const togglePlay = () => {
     videoComponentRef.current.toggle();
   };
@@ -180,6 +182,15 @@ const Base = ({ input, paragraphs, width, transcription }) => {
   const jump = (percentPoint) => {
     videoComponentRef.current.jump(percentPoint);
   };
+
+  //const jumpToTime = (time) => {
+   // setHighlightAtom(null);
+    //const videoElement = ref.current;
+    //videoComponentRef.current.currentTime = timeToSeconds(time);
+  //};
+  
+  
+
   const videoSource = input.sourcePath + input.video.source;
 
   const frameInfo = {
@@ -226,7 +237,7 @@ const Base = ({ input, paragraphs, width, transcription }) => {
             isFull={!withVideo}
             disableControl={_.get(input, 'template.disableControl')}
           >
-            <InnerContent key={key}>
+            <InnerContent key={key} id="innerCon">
               {content.map((data, index) => {
                 return (
                   <Content
@@ -250,6 +261,7 @@ const Base = ({ input, paragraphs, width, transcription }) => {
               content={content}
               ref={videoComponentRef}
               videoLocation={input.video.control}
+              id="videoz"
             />
           </InnerContainer>
           <ControllerContainer>
@@ -264,13 +276,13 @@ const Base = ({ input, paragraphs, width, transcription }) => {
         </Container>
         {zoomOpen && (
           <div className={`h-[100%] w-full`}>
-          <Subtitles subtitles={transcription}></Subtitles>
+          <Subtitles subtitles={transcription} jump={jump}></Subtitles>
         </div>
         )}
 
         {!zoomOpen && (
           <div className={`h-[20%] w-full`}>
-          <Subtitles subtitles={transcription}></Subtitles>
+          <Subtitles subtitles={transcription} jump={jump}></Subtitles>
         </div> // checked
         )}
       </div>

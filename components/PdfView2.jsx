@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import pdfmap from '../pdfmap1.json';
 import { useAtom } from 'jotai';
 import { useSelector } from 'react-redux';
-import { paragraphAtom, activityAtom } from '../atom';
+import { paragraphAtom, activityAtom, durationAtom, percentAtom, playingAtom, highlightAtom } from '../atom';
 import { Viewer, Worker, SpecialZoomLevel } from '@react-pdf-viewer/core';
 import { highlightPlugin, Trigger } from '@react-pdf-viewer/highlight';
 import { pageNavigationPlugin } from '@react-pdf-viewer/page-navigation';
@@ -16,9 +16,14 @@ import pdf2copy from '../map2PdfBars.json';
 import blockColours from '../constants/map2ColourBlock';
 import sectionBlock from '../constants/map1ColourBlock';
 
-function PdfView2({ width }) {
+function PdfView2({ width, input }) {
   const [paragraphs, setParagraphAtom] = useAtom(paragraphAtom);
   const [current] = useAtom(activityAtom);
+  const [duration, setDuration] = useAtom(durationAtom);
+  const [percent, setPercent] = useAtom(percentAtom);
+  const [play, setPlay] = useAtom(playingAtom);
+  const [activity, setActivity] = useAtom(activityAtom);
+  const [, setHighlightAtom] = useAtom(highlightAtom);
   const pageNavigationPluginInstance = pageNavigationPlugin();
   const { jumpToPage } = pageNavigationPluginInstance;
   const defaultLayoutPluginInstance = defaultLayoutPlugin({
@@ -28,9 +33,52 @@ function PdfView2({ width }) {
 
   const [areas, setAreas] = React.useState([]);
   const [ref, setRef] = useState(null);
+  const [videoRef, setVideoRef] = useState();
+  const [content, setContent] = useState(input.content.original);
 
   const map1Toggle = useSelector((state) => state.toggle.map1);
   const map2Toggle = useSelector((state) => state.toggle.map2);
+
+  const convertTime = (time) => {
+    let string = time;
+    const timeSplit = string.split(':');
+    const minutes = parseInt(timeSplit[0]);
+    const seconds = parseInt(timeSplit[1]);
+    return minutes * 60 + seconds;
+  };
+  
+  useEffect(() => {
+    let videoContainer = document.getElementsByTagName("video"); //document.getElementById('innerCon');
+    if (videoContainer != null) {
+      setVideoRef(videoContainer[0]); //document.getElementById('innerCon');
+    // console.log("VIDEO", videoRef)
+    }
+  }, []);
+
+  const jump = (percentPoint) => {
+    const time = percentPoint * duration;
+    setPercent(percentPoint);
+    videoRef.currentTime = time;
+    // videoRef.current.play();
+    setTimeout(() => {
+      if (!play) {
+        videoRef.pause();
+        setPlay(false);
+      }
+    }, 100);
+    const slide = _.findLastIndex(content, (obj) => obj.start_time < time);
+    const action = "jump";
+    setActivity({ slide, action, time, play });
+  }
+
+  const jumpToTime = (time) => {
+    let durationSeconds = duration //509; //convertTime(duration);
+     let focusTimeSeconds = convertTime(time);
+     setHighlightAtom(null);
+     const percentPoint = focusTimeSeconds / durationSeconds;
+     jump(percentPoint);
+   };
+
 
   useEffect(() => {
     try {
@@ -94,10 +142,10 @@ function PdfView2({ width }) {
             [area.highlights[0].left > 50
               ? 'borderRight'
               : 'borderLeft']: `${pdfBlockBorderWitdh}px solid ${colour}`,
-            [area.highlights[0].left > 50 && 'marginLeft']: `${paragraphBars}px`,
+            [area.highlights[0].left > 50 && 'marginLeft']: `${paragraphBars}px`, zIndex: '1', cursor: 'pointer',
             [area.highlights[0].left < 50 && 'marginLeft']: `-${paragraphBars}px`,
           })}
-        />
+          onClick={() => jumpToTime(area.start)}/>
       ));
 
   const sectionColour = (array, colour, props) =>
@@ -109,11 +157,11 @@ function PdfView2({ width }) {
           style={Object.assign({}, props.getCssProperties(area.highlights[0], props.rotation), {
             [area.highlights[0].left > 50
               ? 'borderRight'
-              : 'borderLeft']: `${pdfBlockBorderWitdh}px solid ${colour}`,
+              : 'borderLeft']: `${pdfBlockBorderWitdh}px solid ${colour}`, zIndex: '1', cursor: 'grab',
             [area.highlights[0].left > 50 && 'marginLeft']: `${sectionBars}px`,
             [area.highlights[0].left < 50 && 'marginLeft']: `-${sectionBars}px`,
           })}
-        />
+          onClick={() => jumpToTime(area.start)}/>
       ));
 
   const highlightColour = (array, colour, props) =>

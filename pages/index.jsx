@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Base from '../components/base';
 import input from '../input1.json';
 import subtitles from '../transcription.json';
@@ -8,6 +8,10 @@ import Togglebtn from '../components/Togglebtn';
 
 const Index = () => {
   const [paragraphs, setParagraphs] = useState();
+  const videoComponentRef = useRef();
+  React.useEffect(() => {
+    console.log("MY REF", videoComponentRef.current);
+  }, []);
   const sizes = [60, 40];
   const [width, setWidth] = useState([sizes[0], sizes[1]]);
   const currentParagraphs = (val) => {
@@ -38,7 +42,7 @@ const Index = () => {
         />
       </div>
       <div className="overflow-auto">
-        <PdfView2 paragraphs={paragraphs} width={width[1]} />
+        <PdfView2 paragraphs={paragraphs} width={width[1]} input={input}/>
       </div>
       <div>
         <Togglebtn />

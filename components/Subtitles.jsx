@@ -1,17 +1,36 @@
 import { useAtom } from 'jotai';
 import React, { useEffect, useState, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { currentTimeAtom, darkModeAtom, mobileModeAtom, withFrameAtom } from '../atom';
+import { currentTimeAtom, darkModeAtom, mobileModeAtom, highlightAtom, percentAtom, durationTimeAtom, playingAtom,
+  withFrameAtom, withVideoAtom, durationAtom } from '../atom';
 import objeto from '../constants/map2ColourBlock';
 import { paragraph, sections } from '../constants/transcriptBlock';
 import { AiOutlineFullscreenExit, AiOutlineFullscreen } from 'react-icons/ai';
 import { toggleZoom } from '../redux/reducers/zoomReducer';
 
-const Subtitles = ({ subtitles }) => {
+const Subtitles = ({ subtitles, jump }) => {
   const [currentTime] = useAtom(currentTimeAtom);
+  const [duration] = useAtom(durationAtom);
   const [focusedId, setFocusedId] = useState(null);
   const refs = useRef({});
+  const [, setHighlightAtom] = useAtom(highlightAtom);
   const findSub = (time) => subtitles.find((element) => element.start == time) || null;
+
+  const convertTime = (time) => {
+    let string = time;
+    const timeSplit = string.split(':');
+    const minutes = parseInt(timeSplit[0]);
+    const seconds = parseInt(timeSplit[1]);
+    return minutes * 60 + seconds;
+  };
+
+  const jumpToTime = (time) => {
+    let durationSeconds = duration;
+    let focusTimeSeconds = convertTime(time);
+    setHighlightAtom(null);
+    const percentPoint = focusTimeSeconds / durationSeconds;
+    jump(percentPoint);
+  };
 
   useEffect(() => {
     const sub = findSub(currentTime);
@@ -63,7 +82,7 @@ const Subtitles = ({ subtitles }) => {
             tabIndex={focusedId === sub.index ? 0 : -1}
           >
             <div className="w-[20%] flex items-center">
-              <button className="p-1 flex items-center h-6 text-white text-sm bg-gray-500 rounded-full">
+              <button className="p-1 flex items-center h-6 text-white text-sm bg-gray-500 rounded-full" onClick={() => jumpToTime(sub.start)}>
                 {sub.start}
               </button>
               {/* Sessions */}
@@ -86,7 +105,7 @@ const Subtitles = ({ subtitles }) => {
                     ),
                 )}
             </div>
-            <h1 className="w-[100%] py-3 text-white text-xl">{sub.text}</h1>
+            <h1 className="w-[100%] py-3 text-white text-xl" onClick={() => jumpToTime(sub.start)} style={{cursor: "pointer"}}>{sub.text}</h1>
           </div>
         );
       })}
